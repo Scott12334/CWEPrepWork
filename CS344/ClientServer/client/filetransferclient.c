@@ -13,9 +13,11 @@ void DieWithError(char *errorMessage);  /* Error handling function */
 void talkToServer(FILE * fileSocket);
 void getFile(long fileSize, FILE * fileSocket);
 void authenticate(FILE * fileSocket);
+void addNote(FILE * fileSocket);
 void signIn(FILE * fileSocket);
 void signUp(FILE * fileSocket);
 void menu(FILE * fileSocket);
+void viewNotes(FILE * fileSocket);
 
 int main(int argc, char *argv[])
 {
@@ -58,9 +60,8 @@ int main(int argc, char *argv[])
 		DieWithError("Error wrapping socket in FILE");
 
 	authenticate(fileSocket);
-	getchar();
 	menu(fileSocket);
-
+	//Should never reach
     fclose(fileSocket);
     exit(0);
 }
@@ -68,13 +69,53 @@ void menu(FILE * fileSocket){
 	char selection = 0;
 	while(selection != '3'){
 		printf("1. Add a note\n");
-		printf("2. View a note\n");
+		printf("2. View notes\n");
 		printf("3. Quit\n");
 		printf("Please enter your selection\n");
-		scanf("%c",&selection);
-		fwrite(&selection,sizeof(char),1,fileSocket);
-		fflush(fileSocket);
+		scanf("%s",&selection);
+		if(selection == '1'){
+			//Add note
+			fwrite(&selection,sizeof(char),1,fileSocket);
+			addNote(fileSocket);
+			fflush(fileSocket);
+		}else if(selection == '2'){
+			//View notes
+			fwrite(&selection,sizeof(char),1,fileSocket);
+			fflush(fileSocket);
+			viewNotes(fileSocket);
+		}else if(selection == '3'){
+			//Quit
+			fwrite(&selection,sizeof(char),1,fileSocket);
+			fflush(fileSocket);
+			fclose(fileSocket);
+			exit(0);
+			break;
+		}else{
+			printf("Please enter a 1, 2, or 3");
+		}
 	}
+}
+void viewNotes(FILE * fileSocket){
+	char totalNotes;
+	fread(&totalNotes,sizeof(char),1,fileSocket);
+	for(int i = 0; i < totalNotes; i ++){
+		int noteLen;
+		fread(&noteLen, sizeof(int),1,fileSocket);
+		char * noteMessage = (char*)malloc(sizeof(char)*(noteLen + 1));
+		fread(noteMessage,sizeof(char),noteLen,fileSocket);
+		printf("Note %d: %s\n",i,noteMessage);
+	}
+}
+void addNote(FILE * fileSocket){
+	char * noteMessage = (char *)malloc(sizeof(char)*1000);
+	memset(noteMessage,0,1000);
+	printf("Please enter your note:\n");
+	getchar();
+	fgets(noteMessage,1000,stdin);
+	int messageLen = strlen(noteMessage);
+	noteMessage[messageLen-1] = 0;
+	fwrite(&messageLen,sizeof(int),1,fileSocket);
+	fwrite(noteMessage,sizeof(char),messageLen,fileSocket);
 }
 void authenticate(FILE * fileSocket){
 	int selection = '0';
@@ -89,8 +130,10 @@ void authenticate(FILE * fileSocket){
 		fread(&signInResult,sizeof(char),1,fileSocket);
 		if(signInResult == 3){
 			printf("Wrong password. Try Again\n");
+			exit(1);
 		}else if(signInResult == 1){
 			printf("User does not exist. Try Again\n");
+			exit(1);
 		}else if(signInResult == 2){
 			printf("Sign in Succesfull! Welcome!\n");
 		}
@@ -189,7 +232,7 @@ void signIn(FILE * fileSocket){
 	fwrite(username,sizeof(char),usernameLen,fileSocket);
 	fwrite(password,sizeof(char),passwordLen,fileSocket);
 	fflush(fileSocket);
-	printf("Sent\n");
+	getchar();
 }
 void talkToServer(FILE * fileSocket)
 {

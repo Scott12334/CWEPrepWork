@@ -17,6 +17,8 @@ char * authenticateClient(FILE * fileSocket);
 char * signInClient(FILE * fileSocket,LIST * userListHead);
 char * signUpClient(FILE * fileSocket, LIST * userListHead);
 void handleClientConnection(int clntSock);
+void addNoteFromUser(NOTE_LIST ** userNoteListHead, FILE * fileSocket);
+void displayAllNotes(NOTE_LIST * userNoteListHead, FILE * fileSocket);
 void handleClientConnection(int clntSock){
 	FILE * fileSocket;
 	if ((fileSocket = fdopen(clntSock, "r+")) == NULL)
@@ -37,16 +39,43 @@ void handleClientConnection(int clntSock){
 		if(selection == '1'){
 			//Allow User to add note
 			printf("User would like to add note\n");
+			addNoteFromUser(&userNoteListHead,fileSocket);
 		}else if(selection == '2'){
 			//Allow User to search/view note
 			printf("User would like to view note\n");
+			displayAllNotes(userNoteListHead,fileSocket);
 		}else if(selection == '3'){
+			saveNotes(userNoteListHead,username);
+			fclose(fileSocket);
 			looping = 1;
 			break;
 		}
 	}
 	//Quit and save
 	printf("User has left\n");
+}
+void displayAllNotes(NOTE_LIST * userNoteListHead, FILE * fileSocket){
+	//Send count of how many notes there are
+	char totalCount = noteCount(userNoteListHead);
+	fwrite(&totalCount,sizeof(char),1,fileSocket);
+	//Loop
+	while(userNoteListHead){
+		//Send length of note
+		int messageLen = strlen(userNoteListHead->note->noteString);
+		fwrite(&messageLen,sizeof(int),1,fileSocket);
+		//Send note
+		fwrite(userNoteListHead->note->noteString,sizeof(char),messageLen,fileSocket);
+		userNoteListHead = userNoteListHead->nextNode;
+	}
+	fflush(fileSocket);
+}
+void addNoteFromUser(NOTE_LIST ** userNoteListHead, FILE * fileSocket){
+	int messageLen;
+	fread(&messageLen,sizeof(int),1,fileSocket);
+	char * message = (char *)malloc(sizeof(char)*messageLen);
+	fread(message,sizeof(char),messageLen,fileSocket);
+	addNote(userNoteListHead,message);
+	printf("Added note with message: %s\n",message);
 }
 char * authenticateClient(FILE * fileSocket){
 	LIST * userListHead = loadList();
