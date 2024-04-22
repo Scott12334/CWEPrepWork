@@ -14,6 +14,8 @@ void talkToServer(FILE * fileSocket);
 void getFile(long fileSize, FILE * fileSocket);
 void authenticate(FILE * fileSocket);
 void signIn(FILE * fileSocket);
+void signUp(FILE * fileSocket);
+void menu(FILE * fileSocket);
 
 int main(int argc, char *argv[])
 {
@@ -56,10 +58,23 @@ int main(int argc, char *argv[])
 		DieWithError("Error wrapping socket in FILE");
 
 	authenticate(fileSocket);
-    talkToServer(fileSocket);
+	getchar();
+	menu(fileSocket);
 
     fclose(fileSocket);
     exit(0);
+}
+void menu(FILE * fileSocket){
+	char selection = 0;
+	while(selection != '3'){
+		printf("1. Add a note\n");
+		printf("2. View a note\n");
+		printf("3. Quit\n");
+		printf("Please enter your selection\n");
+		scanf("%c",&selection);
+		fwrite(&selection,sizeof(char),1,fileSocket);
+		fflush(fileSocket);
+	}
 }
 void authenticate(FILE * fileSocket){
 	int selection = '0';
@@ -70,10 +85,90 @@ void authenticate(FILE * fileSocket){
 	if(selection == '1'){
 		//Sign In
 		signIn(fileSocket);
+		char signInResult;
+		fread(&signInResult,sizeof(char),1,fileSocket);
+		if(signInResult == 3){
+			printf("Wrong password. Try Again\n");
+		}else if(signInResult == 1){
+			printf("User does not exist. Try Again\n");
+		}else if(signInResult == 2){
+			printf("Sign in Succesfull! Welcome!\n");
+		}
 	}
 	else if(selection == '2'){
 		//Sign Up
+		signUp(fileSocket);
+		char signUpResult;
+		fread(&signUpResult,sizeof(char),1,fileSocket);
+		if(signUpResult == 2){
+			printf("Sign up was sucessful! Welcome!\n");
+		}else if(signUpResult == 1){
+			printf("User name already exisits, please sign in.\n");
+		}else{
+			printf("Unable to sign-in\n");
+		}
 	}
+}
+void signUp(FILE * fileSocket){
+	char username[31];
+	char password[101];
+	char fullName[51];
+	memset(username,0,31);
+	memset(password,0,100);
+	memset(fullName,0,50);
+
+	int userNameSet = 0;
+	getchar();
+	while(userNameSet == 0){
+		printf("What is your username?\n");
+		fgets(username,31,stdin);
+		if(username[0] < '0' || username[0] > '9'){
+			int noSpace = 1;
+			for(int i = 0; i < strlen(username); i++){
+				if(username[i] == ' '){
+					noSpace = 0;
+					break;
+				}
+			}
+			if(noSpace == 1){
+				userNameSet = 1;
+				break;
+			}
+		}
+		printf("Your username can not contain spaces or start with a number\n");
+	}
+	int passwordSet = 0;
+	while(passwordSet == 0){
+		printf("What is your password?\n");
+		fgets(password,101,stdin);
+		if(strlen(password)>=8){
+			passwordSet = 1;
+			break;
+		}
+		printf("Your password must be great then 8.\n");
+	}
+	printf("What is your full name?\n");
+	fgets(fullName,51,stdin);
+	char type = '2';
+	unsigned char usernameLen = strlen(username);
+	unsigned char passwordLen = strlen(password);
+	unsigned char fullNameLen = strlen(fullName);
+	username[usernameLen-1]=0;
+	password[passwordLen-1]=0;
+	fullName[fullNameLen-1]=0;
+	usernameLen--;
+	passwordLen--;
+	fullNameLen--;
+
+	fwrite(&type,sizeof(char),1,fileSocket);
+	fwrite(&usernameLen,sizeof(char),1,fileSocket);
+	fwrite(&passwordLen,sizeof(char),1,fileSocket);
+	fwrite(&fullNameLen,sizeof(char),1,fileSocket);
+	fwrite(username,sizeof(char),usernameLen,fileSocket);
+	fwrite(password,sizeof(char),passwordLen,fileSocket);
+	fwrite(fullName,sizeof(char),fullNameLen,fileSocket);
+
+	fflush(fileSocket);
 }
 void signIn(FILE * fileSocket){
 	char username[31]; //Meets requirment of at most 30 chars long with null character
@@ -84,16 +179,17 @@ void signIn(FILE * fileSocket){
 	scanf("%s",username);
 	printf("What is your password?\n");
 	scanf("%s",password);
-	char test = '1';
+	char type = '1';
 	unsigned char usernameLen = strlen(username);
 	unsigned char passwordLen = strlen(password);
 
-	fwrite(&test,sizeof(char),1,fileSocket);
+	fwrite(&type,sizeof(char),1,fileSocket);
 	fwrite(&usernameLen,sizeof(char),1,fileSocket);
 	fwrite(&passwordLen,sizeof(char),1,fileSocket);
-	fwrite(&username,sizeof(char),usernameLen,fileSocket);
-	fwrite(&password,sizeof(char),passwordLen,fileSocket);
+	fwrite(username,sizeof(char),usernameLen,fileSocket);
+	fwrite(password,sizeof(char),passwordLen,fileSocket);
 	fflush(fileSocket);
+	printf("Sent\n");
 }
 void talkToServer(FILE * fileSocket)
 {

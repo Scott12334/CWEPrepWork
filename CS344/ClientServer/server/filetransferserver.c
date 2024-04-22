@@ -10,9 +10,8 @@
 #define MAXPENDING 5
 
 void DieWithError(char *errorMessage);  /* Error handling function */
-void authenticateClient(int clntSock);
+void handleClientConnection(int clntSock);
 void HandleFileTransferClient(int clntSock);
-
 int main(int argc, char *argv[])
 {
     int servSock;                    /* Socket descriptor for server */
@@ -60,7 +59,7 @@ int main(int argc, char *argv[])
         /* clntSock is connected to a client! */
 
         printf("Handling client %s\n", inet_ntoa(fileClntAddr.sin_addr));
-        authenticateClient(clntSock);
+        handleClientConnection(clntSock);
     }
     /* NOT REACHED */
 }
