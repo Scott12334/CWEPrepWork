@@ -1,0 +1,9 @@
+#Ghidra Lock File
+#Fri Jul 19 12:41:22 EDT 2024
+OS\ Name=Linux
+OS\ Version=6.5.0-kali3-amd64
+Username=kali
+Hostname=kali
+<META>\ Supports\ File\ Channel\ Locking=Channel Lock
+OS\ Architecture=amd64
+Timestamp=7/19/24, 12\:41 PM
