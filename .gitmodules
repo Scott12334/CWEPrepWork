@@ -1,0 +1,3 @@
+[submodule "RE/HHackADayU/hackaday-u"]
+	path = RE/HHackADayU/hackaday-u
+	url = https://github.com/wrongbaud/hackaday-u

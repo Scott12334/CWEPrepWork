@@ -1,0 +1,15 @@
+serverWithMenu:	serverWithMenu.o HandleTCPClientWithMenu.o DieWithError.o getPut.o
+	gcc serverWithMenu.o HandleTCPClientWithMenu.o DieWithError.o getPut.o -o serverWithMenu
+
+serverWithMenu.o:	serverWithMenu.c
+	gcc -c serverWithMenu.c
+
+HandleTCPClientWithMenu.o:	HandleTCPClientWithMenu.c
+	gcc -c HandleTCPClientWithMenu.c
+
+getPut.o:	getPut.c
+	gcc -c getPut.c
+
+DieWithError.o:	DieWithError.c
+	gcc -c DieWithError.c
+
